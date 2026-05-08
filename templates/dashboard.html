@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LockIN Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+
+ <div class="sidebar">
+
+    <div class="logo-section">
+
+    <h2>
+        LockIN
+    </h2>
+
+    <img src="{{ url_for('static', filename='images/logo.png') }}"
+         class="logo-img">
+
+    </div>
+
+    <a href="/dashboard">
+
+        <i class="bi bi-grid-1x2-fill"></i>
+
+        Dashboard
+
+    </a>
+
+    <a href="/timetable">
+
+        <i class="bi bi-calendar2-check-fill"></i>
+
+        AI Timetable
+
+    </a>
+
+    <a href="/download_report">
+
+        <i class="bi bi-file-earmark-arrow-down-fill"></i>
+
+        Download Report
+
+    </a>
+
+    <a href="/logout">
+
+        <i class="bi bi-box-arrow-right"></i>
+
+        Logout
+
+    </a>
+
+</div>
+
+<!-- MAIN CONTENT -->
+
+<div class="main-content">
+
+    <!-- HEADER -->
+
+    <div class="d-flex justify-content-between align-items-center mb-5">
+
+        <div>
+
+            <h1 class="welcome-text">
+                Ready to Lock In?
+            </h1>
+
+            <p class="text-secondary">
+                Let's improve your focus and wellness today.
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- ALERTS -->
+
+    {% if alerts %}
+
+    <div class="notification-container">
+
+        {% for alert in alerts %}
+
+            {% if "✅" in alert %}
+
+                <div class="popup-alert safe-popup">
+
+                    {{ alert }}
+
+                </div>
+
+            {% else %}
+
+                <div class="popup-alert danger-popup">
+
+                    {{ alert }}
+
+                </div>
+
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+    {% endif %}
+
+    <!-- INPUT FORM -->
+
+    <div class="glass-card mb-5">
+
+        <h3 class="mb-4">
+            Burnout Prediction
+        </h3>
+
+        <form action="/submit" method="POST">
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+
+                    <label>Study Hours</label>
+
+                    <input type="number"
+                           step="0.1"
+                           class="form-control"
+                           name="study_hours"
+                           required>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <label>Sleep Hours</label>
+
+                    <input type="number"
+                           step="0.1"
+                           class="form-control"
+                           name="sleep_hours"
+                           required>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <label>Mood (1-10)</label>
+
+                    <input type="number"
+                           class="form-control"
+                           name="mood"
+                           required>
+
+                </div>
+
+                <div class="col-md-6 mb-3">
+
+                    <label>Distractions</label>
+
+                    <input type="number"
+                           class="form-control"
+                           name="distractions"
+                           required>
+
+                </div>
+
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary w-100 mt-3">
+
+                Predict Burnout
+
+            </button>
+
+        </form>
+
+    </div>
+
+    <!-- PREDICTION -->
+
+    {% if prediction %}
+
+    <div class="glass-card mb-5 text-center">
+
+        <h2>Burnout Prediction</h2>
+
+        <h1 class="display-2 fw-bold">
+            {{ prediction }}
+        </h1>
+
+        <hr>
+
+        <h3>
+            Productivity Score:
+            {{ productivity }}%
+        </h3>
+
+        <hr>
+
+        <h4>AI Recommendation</h4>
+
+        <p class="mt-3">
+            {{ recommendation }}
+        </p>
+
+    </div>
+
+    {% endif %}
+
+    <!-- STATS -->
+
+    <div class="row mb-5">
+
+        <div class="col-md-4">
+
+            <div class="stat-card glass-card">
+
+                <h5>Total Sessions</h5>
+
+                <h1>{{ total_sessions }}</h1>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="stat-card glass-card">
+
+                <h5>Average Study Hours</h5>
+
+                <h1>{{ avg_study }}</h1>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="stat-card glass-card">
+
+                <h5>Average Sleep Hours</h5>
+
+                <h1>{{ avg_sleep }}</h1>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MAIN ANALYTICS -->
+
+    <div class="glass-card mb-5">
+
+        <h3 class="mb-4">
+            Study vs Sleep Analytics
+        </h3>
+
+        <canvas id="studyChart"></canvas>
+
+    </div>
+
+    <!-- WELLNESS + DISTRACTION -->
+
+    <div class="row">
+
+        <div class="col-md-6">
+
+            <div class="glass-card mb-4 text-center">
+
+                <h4 class="mb-4">
+                    Wellness Score
+                </h4>
+
+                <div style="font-size:80px; font-weight:700; color:#8b5cf6;">
+
+                    {{ productivity }}%
+
+                </div>
+
+                <p class="text-secondary mt-3">
+
+                    Your current productivity and wellness balance based on study habits.
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-6">
+
+            <div class="glass-card mb-4">
+
+                <h4>
+                    Distraction Trends
+                </h4>
+
+                <canvas id="distractionChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- SESSION TABLE -->
+
+    <div class="glass-card">
+
+        <h3 class="mb-4">
+            Session History
+        </h3>
+
+        <div class="table-responsive">
+
+            <table class="table table-hover">
+
+                <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+                        <th>Study</th>
+                        <th>Sleep</th>
+                        <th>Mood</th>
+                        <th>Distractions</th>
+                        <th>Date</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for session in sessions %}
+
+                    <tr>
+
+                        <td>{{ session.id }}</td>
+                        <td>{{ session.study_hours }}</td>
+                        <td>{{ session.sleep_hours }}</td>
+                        <td>{{ session.mood }}</td>
+                        <td>{{ session.distractions }}</td>
+                        <td>{{ session.created_at }}</td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const ctx = document.getElementById('studyChart');
+
+new Chart(ctx, {
+
+    type: 'line',
+
+    data: {
+
+        labels: {{ range(1, study_data|length + 1) | list }},
+
+        datasets: [
+
+            {
+                label: 'Study Hours',
+                data: {{ study_data }},
+                borderWidth: 4,
+                tension:0.4
+            },
+
+            {
+                label: 'Sleep Hours',
+                data: {{ sleep_data }},
+                borderWidth: 4,
+                tension:0.4
+            }
+
+        ]
+    },
+
+    options:{
+        plugins:{
+            legend:{
+                labels:{
+                    color:'#5b5378'
+                }
+            }
+        }
+    }
+});
+
+
+const distractionCtx = document.getElementById('distractionChart');
+
+new Chart(distractionCtx, {
+
+    type: 'bar',
+
+    data: {
+
+        labels: {{ range(1, distraction_data|length + 1) | list }},
+
+        datasets: [{
+
+            label: 'Distractions',
+            data: {{ distraction_data }},
+            borderWidth: 2,
+            borderRadius:10
+
+        }]
+    },
+
+    options:{
+        plugins:{
+            legend:{
+                labels:{
+                    color:'#5b5378'
+                }
+            }
+        }
+    }
+});
+
+</script>
+
+</body>
+</html>
